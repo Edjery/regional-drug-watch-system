@@ -1,4 +1,5 @@
 import * as Yup from 'yup';
+import { Identifiable } from '../service/genericService';
 
 const suspectProfileSchema = Yup.object().shape({
     id: Yup.number().label('ID'),
@@ -51,3 +52,4 @@ export interface ISuspectProfile {
 
 export default suspectProfileSchema;
 
+export type TSuspectProfile = Yup.InferType<typeof suspectProfileSchema> & Identifiable;
