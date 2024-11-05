@@ -1,6 +1,6 @@
 import { Box, SxProps, Typography } from "@mui/material";
 import { ReactNode } from "react";
-import { cabinFabric, forestChill, white } from "../../values/colors";
+import { cabinFabric, white } from "../../values/colors";
 import { betterScrollStyle } from "../../values/styles";
 import transparency from "../../values/transparency";
 
