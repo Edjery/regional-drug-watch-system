@@ -9,10 +9,10 @@ import {
   TextField,
 } from "@mui/material";
 import { ErrorMessage, Field, Form, Formik } from "formik";
-import suspectProfileSchema, { ISuspectProfileSchema } from "../schema/suspectProfileSchema";
+import suspectProfileSchema, { ISuspectProfile } from "../schema/suspectProfileSchema";
 import SuspectProfileService from "../service/SuspectProfileService";
 
-const initialValues: ISuspectProfileSchema = {
+const initialValues: ISuspectProfile = {
   lastName: "",
   firstName: "",
   middleName: "",
@@ -26,8 +26,6 @@ const initialValues: ISuspectProfileSchema = {
   telephoneNo: "",
   status: "",
   sex: "Male",
-  createdAt: "",
-  updatedAt: "",
 };
 
 const SuspectProfileForm = () => {
@@ -38,8 +36,10 @@ const SuspectProfileForm = () => {
     <Formik
       initialValues={initialValues}
       validationSchema={suspectProfileSchema}
-      onSubmit={(values) => {
-        createItems(values);
+      onSubmit={(values, { resetForm }) => {
+        createItems(values).then(() => {
+          resetForm();
+        });
       }}
     >
       {({ errors, touched }) => (
@@ -88,7 +88,6 @@ const SuspectProfileForm = () => {
                 variant="outlined"
                 fullWidth
                 margin="normal"
-                required
                 helperText={touched.middleName && errors.middleName ? errors.middleName : ""}
                 error={Boolean(errors.middleName && touched.middleName)} // Proper error check
               />

@@ -1,4 +1,4 @@
-import { ISuspectProfileSchema } from "../schema/suspectProfileSchema";
+import { ISuspectProfile } from "../schema/suspectProfileSchema";
 import supabase from "../supabase";
 import { popupError, popupSuccess } from "../components/Popups";
 import { DEFAULT_ERROR_MESSAGE } from "../values/defaultValues";
@@ -11,24 +11,25 @@ export default class SuspectProfileService {
 
     public createItem = () => {
         return useMutation({
-            mutationFn: async (item: ISuspectProfileSchema) => {
-                const { data } = await supabase
+            mutationFn: async (item: ISuspectProfile) => {
+                const { data, error } = await supabase
                     .from(tableName)
                     .insert([item])
                     .select()
 
+                if (error !== null) popupError(error.message)
                 return data;
             },
-            onMutate: (newItemInfo: ISuspectProfileSchema) => {
-                this.queryClient.setQueryData([tableName], (prevItems: ISuspectProfileSchema[] | undefined) => {
+            onMutate: (newItemInfo: ISuspectProfile) => {
+                this.queryClient.setQueryData([tableName], (prevItems: ISuspectProfile[] | undefined) => {
                     const items = prevItems != undefined ? prevItems : []
-                    return [...items, { ...newItemInfo },] as ISuspectProfileSchema[]
+                    return [...items, { ...newItemInfo },] as ISuspectProfile[]
                 }
                 );
             },
             onSettled: (data, error) => {
                 if (data) {
-                    popupSuccess("Crop added successfully!");
+                    popupSuccess("Profile Submitted!");
                 } else if (error) {
                     if (error instanceof Error) popupError(`Error: ${error.message}`);
                     else popupError(DEFAULT_ERROR_MESSAGE)
@@ -40,14 +41,14 @@ export default class SuspectProfileService {
     }
 
     public getAllItems() {
-        return useQuery<ISuspectProfileSchema[]>({
+        return useQuery<ISuspectProfile[]>({
             queryKey: [tableName],
             queryFn: async () => {
                 const { data } = await supabase
                     .from(tableName)
                     .select('*')
 
-                return data as ISuspectProfileSchema[]
+                return data as ISuspectProfile[]
             },
             refetchOnWindowFocus: false,
         });
