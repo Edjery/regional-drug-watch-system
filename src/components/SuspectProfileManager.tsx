@@ -84,6 +84,8 @@ const suspectProfileColumns: ITableColumn[] = [
     key: "sex",
     label: "Sex",
     enableEdit: true,
+    editType: "select",
+    selectOptions: ["Male", "Female", "Other"],
   },
   {
     key: "createdAt",
@@ -94,6 +96,12 @@ const suspectProfileColumns: ITableColumn[] = [
   {
     key: "updatedAt",
     label: "Updated At",
+    enableEdit: false,
+    isHidden: true,
+  },
+  {
+    key: "id",
+    label: "Age",
     enableEdit: false,
     isHidden: true,
   },
