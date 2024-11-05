@@ -1,6 +1,6 @@
 import { Box, SxProps, Typography } from "@mui/material";
 import { ReactNode } from "react";
-import { forestChill, white } from "../../values/colors";
+import { cabinFabric, forestChill, white } from "../../values/colors";
 import { betterScrollStyle } from "../../values/styles";
 import transparency from "../../values/transparency";
 
@@ -26,7 +26,7 @@ const WindowTab = ({ windowTitle = "", children, sx, sxText }: Props) => {
         p: "20px",
 
         color: white,
-        bgcolor: forestChill.darkBlue + transparency[20],
+        bgcolor: cabinFabric.mistyBlue + transparency[70],
 
         borderRadius: "10px",
         boxShadow: 3,
