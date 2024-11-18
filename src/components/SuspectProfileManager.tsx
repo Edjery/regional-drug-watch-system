@@ -1,6 +1,7 @@
 import { Typography } from "@mui/material";
 import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
 import { useEffect, useState } from "react";
+import calculateAge from "../helper/calculateAge";
 import getColumns from "../helper/getColumns";
 import getHiddenColumns from "../helper/getHiddenColumns";
 import getPSGC from "../helper/getPSGC";
@@ -76,6 +77,7 @@ const SuspectProfileManager = () => {
           addressProvince: provinceName ? provinceName.province_m : "",
           addressCityMunicipality: cityName ? cityName.citymun_m : "",
           addressBarangay: barangayName ? barangayName.barangay_m : "",
+          age: calculateAge(profile.dateOfBirth.toString()),
         };
       });
       setFilteredData(mappedData);

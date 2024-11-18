@@ -29,6 +29,10 @@ export const suspectProfileColumns: ITableColumn[] = [
     isHidden: false,
   },
   {
+    key: "age",
+    label: "Age",
+  },
+  {
     key: "addressStreet",
     label: "Street",
     enableEdit: true,
