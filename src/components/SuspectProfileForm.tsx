@@ -36,6 +36,7 @@ const initialValues: ISuspectProfile = {
 
 const SuspectProfileForm = () => {
   const suspectProfileService = new SuspectProfileService();
+  const psgcService = new PSGCService();
   const { mutateAsync: createItems, isLoading: isCreating } = suspectProfileService.createItem();
 
   const [regions, setRegions] = useState<TblRegion[]>([]);
@@ -61,10 +62,10 @@ const SuspectProfileForm = () => {
 
     // Fetch data concurrently with Promise.all
     Promise.all([
-      PSGCService.getRegions(),
-      PSGCService.getBarangays(),
-      PSGCService.getCities(),
-      PSGCService.getProvinces(),
+      psgcService.getRegions(),
+      psgcService.getBarangays(),
+      psgcService.getCities(),
+      psgcService.getProvinces(),
     ])
       .then(([regionData, barangayData, cityData, provinceData]) => {
         // Update the state with fetched data
@@ -75,7 +76,7 @@ const SuspectProfileForm = () => {
       })
       .catch(() => {
         // Show error if data fetching fails
-        popupError("Error: Something went wrong");
+        popupError("Error: Unable to load PSGC data.");
         setAPIError(true);
       })
       .finally(() => {
@@ -128,7 +129,6 @@ const SuspectProfileForm = () => {
         barangay.province_c === selectedProvince &&
         barangay.region_c === selectedRegion
     );
-    console.log(filteredBarangays);
     setBarangaysOption(filteredBarangays);
   };
 

@@ -2,12 +2,12 @@
 import axios from 'axios';
 import { TblBarangay, TblCityMun, TblProvince, TblRegion } from '../values/interface/@psgcTypes';
 
-class PSGCService {
+export default class PSGCService {
     // Base URL for your API
-    static baseURL = 'http://localhost:8080/api';  // Replace with your actual base URL
+    baseURL = 'http://localhost:8080/api';  // Replace with your actual base URL
 
     // Fetch regions
-    static async getRegions(): Promise<TblRegion[]> {
+    public async getRegions(): Promise<TblRegion[]> {
         try {
             const response = await axios.get(`${this.baseURL}/tbl-region`);
             return response.data;
@@ -18,7 +18,7 @@ class PSGCService {
     }
 
     // Fetch provinces
-    static async getProvinces(): Promise<TblProvince[]> {
+    public async getProvinces(): Promise<TblProvince[]> {
         try {
             const response = await axios.get(`${this.baseURL}/tbl-province`);
             return response.data;
@@ -29,7 +29,7 @@ class PSGCService {
     }
 
     // Fetch cities/municipalities
-    static async getCities(): Promise<TblCityMun[]> {
+    public async getCities(): Promise<TblCityMun[]> {
         try {
             const response = await axios.get(`${this.baseURL}/tbl-city-mun`);
             return response.data;
@@ -40,7 +40,7 @@ class PSGCService {
     }
 
     // Fetch barangays
-    static async getBarangays(): Promise<TblBarangay[]> {
+    public async getBarangays(): Promise<TblBarangay[]> {
         try {
             const response = await axios.get(`${this.baseURL}/tbl-barangay`);
             return response.data;
@@ -50,5 +50,3 @@ class PSGCService {
         }
     }
 }
-
-export default PSGCService;
