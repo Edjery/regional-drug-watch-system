@@ -1,16 +1,22 @@
 import {
   Box,
   Button,
+  CircularProgress,
   FormControl,
   FormHelperText,
   InputLabel,
   MenuItem,
   Select,
   TextField,
+  Typography,
 } from "@mui/material";
 import { ErrorMessage, Field, Form, Formik } from "formik";
+import { useEffect, useState } from "react";
 import suspectProfileSchema, { ISuspectProfile } from "../schema/suspectProfileSchema";
+import PSGCService from "../service/PSGCService";
 import SuspectProfileService from "../service/SuspectProfileService";
+import { TblBarangay, TblCityMun, TblProvince, TblRegion } from "../values/interface/@psgcTypes";
+import { popupError } from "./Popups";
 
 const initialValues: ISuspectProfile = {
   lastName: "",
@@ -32,6 +38,107 @@ const SuspectProfileForm = () => {
   const suspectProfileService = new SuspectProfileService();
   const { mutateAsync: createItems, isLoading: isCreating } = suspectProfileService.createItem();
 
+  const [regions, setRegions] = useState<TblRegion[]>([]);
+  const [barangays, setBarangays] = useState<TblBarangay[]>([]);
+  const [cities, setCities] = useState<TblCityMun[]>([]);
+  const [provinces, setProvinces] = useState<TblProvince[]>([]);
+
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
+  const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
+  const [selectedCityMunicipality, setSelectedCityMunicipality] = useState<string | null>(null);
+
+  const [provincesOption, setProvincesOption] = useState<TblProvince[]>([]);
+  const [citiesOption, setCitiesOption] = useState<TblCityMun[]>([]);
+  const [barangaysOption, setBarangaysOption] = useState<TblBarangay[]>([]);
+
+  const [isLoading, setLoading] = useState(true);
+  const [isAPIError, setAPIError] = useState(false);
+
+  // Fetch data on mount
+  useEffect(() => {
+    // Start loading state
+    setLoading(true);
+
+    // Fetch data concurrently with Promise.all
+    Promise.all([
+      PSGCService.getRegions(),
+      PSGCService.getBarangays(),
+      PSGCService.getCities(),
+      PSGCService.getProvinces(),
+    ])
+      .then(([regionData, barangayData, cityData, provinceData]) => {
+        // Update the state with fetched data
+        setRegions(regionData);
+        setBarangays(barangayData);
+        setCities(cityData);
+        setProvinces(provinceData);
+      })
+      .catch(() => {
+        // Show error if data fetching fails
+        popupError("Error: Something went wrong");
+        setAPIError(true);
+      })
+      .finally(() => {
+        // Set loading to false once the data has been fetched or if there's an error
+        setLoading(false);
+      });
+  }, []); // Empty dependency array to run the effect once when component mounts
+
+  // Update provinces when region is selected
+  const handleRegionChange = (event: any) => {
+    const regionCode: string = event.target.value;
+    setSelectedRegion(regionCode);
+
+    // Filter provinces based on selected region
+    const filteredProvinces = provinces.filter((province) => province.region_c === regionCode);
+    setProvincesOption(filteredProvinces);
+
+    // Clear city and barangay selections when region changes
+    setSelectedProvince(null);
+    setSelectedCityMunicipality(null);
+    setCitiesOption([]);
+    setBarangaysOption([]);
+  };
+
+  // Update cities when province is selected
+  const handleProvinceChange = (event: any) => {
+    const provinceCode = event.target.value;
+    setSelectedProvince(provinceCode);
+
+    // Filter cities based on selected province
+    const filteredCities = cities.filter(
+      (city) => city.province_c === provinceCode && city.region_c === selectedRegion
+    );
+    setCitiesOption(filteredCities);
+
+    // Clear barangay selection when province changes
+    setSelectedCityMunicipality(null);
+    setBarangaysOption([]);
+  };
+
+  // Update barangays when city/municipality is selected
+  const handleCityChange = (event: any) => {
+    const cityCode = event.target.value;
+    setSelectedCityMunicipality(cityCode);
+
+    // Filter barangays based on selected city/municipality
+    const filteredBarangays = barangays.filter(
+      (barangay) =>
+        barangay.citymun_c === cityCode &&
+        barangay.province_c === selectedProvince &&
+        barangay.region_c === selectedRegion
+    );
+    console.log(filteredBarangays);
+    setBarangaysOption(filteredBarangays);
+  };
+
+  if (isLoading) {
+    return <CircularProgress />;
+  }
+  if (isAPIError) {
+    return <Typography>Error: Cannot load PSGC API, Please try again</Typography>;
+  }
+
   return (
     <Formik
       initialValues={initialValues}
@@ -42,7 +149,7 @@ const SuspectProfileForm = () => {
         });
       }}
     >
-      {({ errors, touched }) => (
+      {({ errors, touched, setFieldValue }) => (
         <Form>
           {/* Last Name */}
           <Field
@@ -113,6 +220,122 @@ const SuspectProfileForm = () => {
             )}
           />
 
+          {/* Region */}
+          <FormControl fullWidth margin="normal" required sx={{ textAlign: "left" }}>
+            <InputLabel>Region</InputLabel>
+            <Field
+              name="addressRegion"
+              render={({ field }: { field: any }) => (
+                <Select
+                  {...field}
+                  label="Region"
+                  onChange={(e) => {
+                    handleRegionChange(e);
+                    setFieldValue("addressRegion", e.target.value);
+                  }}
+                >
+                  {regions.map((region) => (
+                    <MenuItem key={region.region_c} value={region.region_c}>
+                      {region.region_m}
+                    </MenuItem>
+                  ))}
+                </Select>
+              )}
+            />
+            <FormHelperText>
+              <ErrorMessage name="sex" />
+            </FormHelperText>
+          </FormControl>
+
+          {/* Province */}
+          <FormControl fullWidth margin="normal" required sx={{ textAlign: "left" }}>
+            <InputLabel>Province</InputLabel>
+            <Field
+              name="addressProvince"
+              render={({ field }: { field: any }) => (
+                <Select
+                  {...field}
+                  label="Province"
+                  onChange={(e) => {
+                    handleProvinceChange(e);
+                    setFieldValue("addressProvince", e.target.value);
+                  }}
+                  disabled={!selectedRegion}
+                >
+                  {provincesOption
+                    .filter((province) => province.region_c === selectedRegion)
+                    .map((province) => (
+                      <MenuItem key={province.province_c} value={province.province_c}>
+                        {province.province_m}
+                      </MenuItem>
+                    ))}
+                </Select>
+              )}
+            />
+            <FormHelperText>
+              <ErrorMessage name="addressProvince" />
+            </FormHelperText>
+          </FormControl>
+
+          {/* City/Municipality */}
+          <FormControl fullWidth margin="normal" required sx={{ textAlign: "left" }}>
+            <InputLabel>City/Municipality</InputLabel>
+            <Field
+              name="addressCityMunicipality"
+              render={({ field }: { field: any }) => (
+                <Select
+                  {...field}
+                  label="City/Municipality"
+                  onChange={(e) => {
+                    handleCityChange(e);
+                    setFieldValue("addressCityMunicipality", e.target.value);
+                  }}
+                  disabled={!selectedProvince}
+                >
+                  {citiesOption
+                    .filter((city) => city.province_c === selectedProvince)
+                    .map((city) => (
+                      <MenuItem key={city.citymun_c} value={city.citymun_c}>
+                        {city.citymun_m}
+                      </MenuItem>
+                    ))}
+                </Select>
+              )}
+            />
+            <FormHelperText>
+              <ErrorMessage name="addressCityMunicipality" />
+            </FormHelperText>
+          </FormControl>
+
+          {/* Barangay */}
+          <FormControl fullWidth margin="normal" required sx={{ textAlign: "left" }}>
+            <InputLabel>Barangay</InputLabel>
+            <Field
+              name="addressBarangay"
+              render={({ field }: { field: any }) => (
+                <Select
+                  {...field}
+                  label="Barangay"
+                  onChange={(e) => {
+                    setFieldValue("addressBarangay", e.target.value);
+                  }}
+                  disabled={!selectedCityMunicipality}
+                >
+                  {barangaysOption
+                    .filter((barangay) => barangay.citymun_c === selectedCityMunicipality)
+                    .map((barangay) => (
+                      <MenuItem key={barangay.barangay_c} value={barangay.barangay_c}>
+                        {barangay.barangay_m}
+                      </MenuItem>
+                    ))}
+                </Select>
+              )}
+            />
+            <FormHelperText>
+              <ErrorMessage name="addressBarangay" />
+            </FormHelperText>
+          </FormControl>
+
           {/* Street */}
           <Field
             name="addressStreet"
@@ -125,78 +348,6 @@ const SuspectProfileForm = () => {
                 margin="normal"
                 helperText={touched.addressStreet && errors.addressStreet ? errors.addressStreet : ""}
                 error={Boolean(errors.addressStreet && touched.addressStreet)} // Proper error check
-              />
-            )}
-          />
-
-          {/* Barangay */}
-          <Field
-            name="addressBarangay"
-            render={({ field }: { field: any }) => (
-              <TextField
-                {...field}
-                label="Barangay"
-                variant="outlined"
-                fullWidth
-                margin="normal"
-                required
-                helperText={touched.addressBarangay && errors.addressBarangay ? errors.addressBarangay : ""}
-                error={Boolean(errors.addressBarangay && touched.addressBarangay)} // Proper error check
-              />
-            )}
-          />
-
-          {/* City/Municipality */}
-          <Field
-            name="addressCityMunicipality"
-            render={({ field }: { field: any }) => (
-              <TextField
-                {...field}
-                label="City/Municipality"
-                variant="outlined"
-                fullWidth
-                margin="normal"
-                required
-                helperText={
-                  touched.addressCityMunicipality && errors.addressCityMunicipality
-                    ? errors.addressCityMunicipality
-                    : ""
-                }
-                error={Boolean(errors.addressCityMunicipality && touched.addressCityMunicipality)} // Proper error check
-              />
-            )}
-          />
-
-          {/* Province */}
-          <Field
-            name="addressProvince"
-            render={({ field }: { field: any }) => (
-              <TextField
-                {...field}
-                label="Province"
-                variant="outlined"
-                fullWidth
-                margin="normal"
-                required
-                helperText={touched.addressProvince && errors.addressProvince ? errors.addressProvince : ""}
-                error={Boolean(errors.addressProvince && touched.addressProvince)} // Proper error check
-              />
-            )}
-          />
-
-          {/* Region */}
-          <Field
-            name="addressRegion"
-            render={({ field }: { field: any }) => (
-              <TextField
-                {...field}
-                label="Region"
-                variant="outlined"
-                fullWidth
-                margin="normal"
-                required
-                helperText={touched.addressRegion && errors.addressRegion ? errors.addressRegion : ""}
-                error={Boolean(errors.addressRegion && touched.addressRegion)} // Proper error check
               />
             )}
           />
@@ -234,7 +385,7 @@ const SuspectProfileForm = () => {
           />
 
           {/* Status */}
-          <FormControl fullWidth margin="normal">
+          <FormControl fullWidth margin="normal" required sx={{ textAlign: "left" }}>
             <InputLabel>Status</InputLabel>
             <Field
               name="status"
@@ -251,7 +402,7 @@ const SuspectProfileForm = () => {
           </FormControl>
 
           {/* Sex */}
-          <FormControl fullWidth margin="normal" required>
+          <FormControl fullWidth margin="normal" required sx={{ textAlign: "left" }}>
             <InputLabel>Sex</InputLabel>
             <Field
               name="sex"
